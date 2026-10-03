@@ -39,6 +39,14 @@ public class ParentAnnouncement {
     @Column(length = 256)
     private String reason;
 
+    /** 由菜单调整单生成时关联的调整单 id */
+    @Column(name = "adjustment_id")
+    private Long adjustmentId;
+
+    /** 通知范围（如“全校一~六年级 2940 名学生家长”），发布时快照留档 */
+    @Column(length = 512)
+    private String notifyScope;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

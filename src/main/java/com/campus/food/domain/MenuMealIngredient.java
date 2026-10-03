@@ -1,5 +1,6 @@
 package com.campus.food.domain;
 
+import com.campus.food.domain.enums.MealIngredientFlag;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,4 +31,13 @@ public class MenuMealIngredient {
     /** 需要数量 */
     @Column(nullable = false, precision = 14, scale = 3)
     private BigDecimal quantity;
+
+    /** 菜单调整标记：正常行 / 被替代的原行（留档） / 调整新增的替代行 */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private MealIngredientFlag flag = MealIngredientFlag.NORMAL;
+
+    /** 所属菜单调整单（ORIGINAL/SUBSTITUTE 行用于留档追溯，正常行为空） */
+    @Column(name = "adjustment_id")
+    private Long adjustmentId;
 }

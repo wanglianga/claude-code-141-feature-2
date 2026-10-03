@@ -58,7 +58,15 @@ public class Ingredient {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal referencePrice = BigDecimal.ZERO;
 
-    /** 替代组：同组食材可互为替代（如 LEAFY 叶菜组） */
+    /** 替代组：同组食材可互为替代（如 LEAFY 叶菜组、CHICKEN 鸡肉组） */
     @Column(length = 64)
     private String substituteGroup;
+
+    /** 每计量单位热量（kcal/单位），菜单调整营养差异核算用 */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal caloriesPerUnit;
+
+    /** 每计量单位蛋白质（g/单位），菜单调整营养差异核算用 */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal proteinPerUnit;
 }

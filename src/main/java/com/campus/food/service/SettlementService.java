@@ -25,6 +25,8 @@ public class SettlementService {
     private final SettlementItemRepo settlementItemRepo;
     private final SupplierRepo supplierRepo;
     private final AcceptanceItemRepo acceptanceItemRepo;
+    private final AcceptanceRecordRepo recordRepo;
+    private final DeliveryItemRepo deliveryItemRepo;
     private final ClaimRepo claimRepo;
     private final AnomalyRecordRepo anomalyRepo;
     private final AnomalyService anomalyService;
@@ -78,6 +80,21 @@ public class SettlementService {
                 returnDed = returnDed.add(ded);
                 addLine(st, SettlementItemType.RETURN, ai.getIngredient(), ai,
                         ai.getRejectedQty(), price, ded.negate(), "拒收退货扣减");
+            }
+
+            // 少送备忘：按订货明细累计送货量复算缺口，缺口货值仅留档、金额 0——少送批次不按原订货量付款
+            OrderItem oiForShort = ai.getDeliveryItem().getOrderItem();
+            if (oiForShort != null) {
+                BigDecimal before = deliveryItemRepo
+                        .sumDeliveredExcludingBatch(oiForShort.getId(), ai.getRecord().getBatch().getId());
+                BigDecimal shortQty = oiForShort.getQuantity().subtract(before)
+                        .subtract(ai.getDeliveredQty());
+                if (shortQty.signum() > 0) {
+                    addLine(st, SettlementItemType.SHORT_DELIVERY, ai.getIngredient(), ai,
+                            shortQty, price, BigDecimal.ZERO,
+                            "少送 " + shortQty + ai.getIngredient().getUnit() + " 不予付款（货值 "
+                                    + scale(shortQty.multiply(price)) + " 仅留档，按原订货量应付中不含此项）");
+                }
             }
         }
 

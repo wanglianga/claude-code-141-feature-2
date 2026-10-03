@@ -4,6 +4,7 @@ import com.campus.food.domain.ParentAnnouncement;
 import com.campus.food.domain.enums.AnnouncementStatus;
 import com.campus.food.repo.ParentAnnouncementRepo;
 import com.campus.food.service.BusinessException;
+import com.campus.food.service.MenuAdjustmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import java.util.List;
 public class AnnouncementController {
 
     private final ParentAnnouncementRepo announcementRepo;
+    private final MenuAdjustmentService adjustmentService;
 
     public record AnnouncementReq(Long mealId, @NotBlank String title, @NotBlank String content, String reason) {
     }
@@ -50,7 +52,7 @@ public class AnnouncementController {
         return announcementRepo.save(a);
     }
 
-    @Operation(summary = "发布公告")
+    @Operation(summary = "发布公告（由菜单调整单生成的公告，同步将调整单置为已发布）")
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasRole('SCHOOL_ADMIN')")
     public ParentAnnouncement publish(@PathVariable Long id) {
@@ -60,7 +62,9 @@ public class AnnouncementController {
         }
         a.setStatus(AnnouncementStatus.PUBLISHED);
         a.setPublishedAt(LocalDateTime.now());
-        return announcementRepo.save(a);
+        announcementRepo.save(a);
+        adjustmentService.syncPublishedIfLinked(a);
+        return a;
     }
 
     @Operation(summary = "撤销公告")

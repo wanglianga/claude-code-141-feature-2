@@ -144,7 +144,7 @@ public class AcceptanceService {
                 if (di.getDeliveredQty().compareTo(remaining) < 0) {
                     BigDecimal shortQty = remaining.subtract(di.getDeliveredQty());
                     anomalyService.create(supplier, order, batch, AnomalyType.SHORT_DELIVERY,
-                            ingredient.getCategory(),
+                            ingredient.getCategory(), ingredient,
                             "[" + ingredient.getName() + "] 订购 " + oi.getQuantity()
                                     + "，此前累计已送 " + deliveredBefore + "，本次送 "
                                     + di.getDeliveredQty() + "，少送 " + shortQty + ingredient.getUnit(),
