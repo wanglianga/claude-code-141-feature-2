@@ -1,6 +1,7 @@
 package com.campus.food.service;
 
 import com.campus.food.domain.*;
+import com.campus.food.domain.enums.GradeLevel;
 import com.campus.food.domain.enums.MealStatus;
 import com.campus.food.domain.enums.MealType;
 import com.campus.food.domain.enums.MenuStatus;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /** 周菜单服务 */
 @Service
@@ -22,6 +24,7 @@ public class MenuService {
     private final MenuMealRepo mealRepo;
     private final MenuMealIngredientRepo mealIngredientRepo;
     private final IngredientRepo ingredientRepo;
+    private final MealGradeServingRepo gradeServingRepo;
 
     @Transactional
     public WeeklyMenu createMenu(LocalDate weekStart, String remark) {
@@ -56,6 +59,7 @@ public class MenuService {
         meal.setDate(date);
         meal.setMealType(mealType);
         meal.setDishName(dishName);
+        meal.setOriginalDishName(dishName);
         meal.setServings(servings == null ? 0 : servings);
         return mealRepo.save(meal);
     }
@@ -102,12 +106,51 @@ public class MenuService {
     public MenuDetail detail(Long menuId) {
         WeeklyMenu menu = getMenu(menuId);
         List<MealDetail> meals = mealRepo.findByMenuIdOrderByDateAsc(menuId).stream()
-                .map(meal -> new MealDetail(meal, mealIngredientRepo.findByMealId(meal.getId())))
+                .map(meal -> new MealDetail(meal,
+                        mealIngredientRepo.findByMealId(meal.getId()),
+                        gradeServingRepo.findByMealId(meal.getId())))
                 .toList();
         return new MenuDetail(menu, meals);
     }
 
-    public record MealDetail(MenuMeal meal, List<MenuMealIngredient> ingredients) {
+    /** 维护某餐次分年级用餐人数（整单覆盖；省略的年级按 0 处理） */
+    @Transactional
+    public List<MealGradeServing> saveGradeServings(Long mealId, Map<GradeLevel, Integer> byGrade) {
+        MenuMeal meal = mealRepo.findById(mealId)
+                .orElseThrow(() -> BusinessException.notFound("餐次不存在: " + mealId));
+        if (byGrade == null || byGrade.isEmpty()) {
+            throw BusinessException.badRequest("年级用餐人数不能为空");
+        }
+        gradeServingRepo.deleteByMealId(mealId);
+        gradeServingRepo.flush();
+        int total = 0;
+        for (Map.Entry<GradeLevel, Integer> e : byGrade.entrySet()) {
+            int students = e.getValue() == null ? 0 : e.getValue();
+            if (students < 0) {
+                throw BusinessException.badRequest("用餐人数不能为负: " + e.getKey());
+            }
+            if (students == 0) {
+                continue;
+            }
+            MealGradeServing row = new MealGradeServing();
+            row.setMeal(meal);
+            row.setGradeLevel(e.getKey());
+            row.setStudents(students);
+            gradeServingRepo.save(row);
+            total += students;
+        }
+        // 同步餐次总份数，供供餐统计使用
+        meal.setServings(total);
+        mealRepo.save(meal);
+        return gradeServingRepo.findByMealId(mealId);
+    }
+
+    public List<MealGradeServing> gradeServings(Long mealId) {
+        return gradeServingRepo.findByMealId(mealId);
+    }
+
+    public record MealDetail(MenuMeal meal, List<MenuMealIngredient> ingredients,
+                             List<MealGradeServing> gradeServings) {
     }
 
     public record MenuDetail(WeeklyMenu menu, List<MealDetail> meals) {

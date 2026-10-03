@@ -14,11 +14,15 @@ public interface MenuMealIngredientRepo extends JpaRepository<MenuMealIngredient
 
     List<MenuMealIngredient> findByMealId(Long mealId);
 
-    @Query("select mmi from MenuMealIngredient mmi where mmi.meal.menu.id = :menuId")
-    List<MenuMealIngredient> findByMenuId(@Param("menuId") Long menuId);
+    /** 当前生效行（原菜单未被替换 + 调整替代行），用于采购计划汇总 */
+    List<MenuMealIngredient> findByMealIdAndRetiredFalse(Long mealId);
+
+    @Query("select mmi from MenuMealIngredient mmi where mmi.meal.menu.id = :menuId and mmi.retired = false")
+    List<MenuMealIngredient> findActiveByMenuId(@Param("menuId") Long menuId);
 
     @Query("select mmi from MenuMealIngredient mmi " +
            "where mmi.ingredient.id = :ingredientId " +
+           "and mmi.retired = false " +
            "and mmi.meal.date between :from and :to " +
            "and mmi.meal.status in :statuses")
     List<MenuMealIngredient> findMealsNeeding(@Param("ingredientId") Long ingredientId,
@@ -28,6 +32,7 @@ public interface MenuMealIngredientRepo extends JpaRepository<MenuMealIngredient
 
     @Query("select count(mmi) from MenuMealIngredient mmi " +
            "where mmi.ingredient.id = :ingredientId " +
+           "and mmi.retired = false " +
            "and mmi.meal.status = com.campus.food.domain.enums.MealStatus.PREPARED " +
            "and mmi.meal.date >= :date")
     long countPreparedMealsNeeding(@Param("ingredientId") Long ingredientId, @Param("date") LocalDate date);

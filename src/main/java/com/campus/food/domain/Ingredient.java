@@ -61,4 +61,22 @@ public class Ingredient {
     /** 替代组：同组食材可互为替代（如 LEAFY 叶菜组） */
     @Column(length = 64)
     private String substituteGroup;
+
+    // ---- 每计量单位营养成分（用于菜单调整时的营养差异对比） ----
+
+    /** 热量（kcal / 单位） */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal caloriesPerUnit;
+
+    /** 蛋白质（g / 单位） */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal proteinPerUnit;
+
+    /** 脂肪（g / 单位） */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal fatPerUnit;
+
+    /** 碳水化合物（g / 单位） */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal carbsPerUnit;
 }

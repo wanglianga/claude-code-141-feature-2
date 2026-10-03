@@ -29,6 +29,14 @@ public class AnomalyService {
     public AnomalyRecord create(Supplier supplier, PurchaseOrder order, DeliveryBatch batch,
                                 AnomalyType type, IngredientCategory category,
                                 String description, BigDecimal penaltyBase) {
+        return create(supplier, order, batch, type, category, null, description, penaltyBase);
+    }
+
+    /** 登记异常（带具体涉及食材）并自动计算建议扣罚金额 */
+    @Transactional
+    public AnomalyRecord create(Supplier supplier, PurchaseOrder order, DeliveryBatch batch,
+                                AnomalyType type, IngredientCategory category, Ingredient ingredient,
+                                String description, BigDecimal penaltyBase) {
         AnomalyRecord a = new AnomalyRecord();
         a.setAnomalyNo(NoGen.next("AN"));
         a.setSupplier(supplier);
@@ -36,6 +44,7 @@ public class AnomalyService {
         a.setBatch(batch);
         a.setType(type);
         a.setCategory(category);
+        a.setIngredient(ingredient);
         a.setDescription(description);
         a.setPenaltyAmount(PenaltyRules.penaltyFor(type, penaltyBase));
         return anomalyRepo.save(a);

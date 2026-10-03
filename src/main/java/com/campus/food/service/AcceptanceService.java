@@ -99,7 +99,7 @@ public class AcceptanceService {
                 accepted = accepted.add(rejected);
                 rejected = BigDecimal.ZERO;
                 AnomalyRecord anomaly = anomalyService.create(supplier, order, batch,
-                        AnomalyType.CANNOT_REJECT_PREPARED, ingredient.getCategory(),
+                        AnomalyType.CANNOT_REJECT_PREPARED, ingredient.getCategory(), ingredient,
                         "食堂已备餐，无法拒收[" + ingredient.getName() + "] " + conditionalQty
                                 + ingredient.getUnit() + "，转附条件接收",
                         conditionalQty.multiply(price));
@@ -144,7 +144,7 @@ public class AcceptanceService {
                 if (di.getDeliveredQty().compareTo(remaining) < 0) {
                     BigDecimal shortQty = remaining.subtract(di.getDeliveredQty());
                     anomalyService.create(supplier, order, batch, AnomalyType.SHORT_DELIVERY,
-                            ingredient.getCategory(),
+                            ingredient.getCategory(), ingredient,
                             "[" + ingredient.getName() + "] 订购 " + oi.getQuantity()
                                     + "，此前累计已送 " + deliveredBefore + "，本次送 "
                                     + di.getDeliveredQty() + "，少送 " + shortQty + ingredient.getUnit(),
@@ -158,16 +158,17 @@ public class AcceptanceService {
             };
             if (in.rotRatio() != null && in.rotRatio().compareTo(threshold) > 0) {
                 anomalyService.create(supplier, order, batch, AnomalyType.HIGH_ROT_RATIO,
-                        ingredient.getCategory(),
+                        ingredient.getCategory(), ingredient,
                         "[" + ingredient.getName() + "] 腐烂比例 " + in.rotRatio()
                                 + " 超过阈值 " + threshold,
                         di.getDeliveredQty().multiply(in.rotRatio()).multiply(price));
             }
-            // 票证缺失（肉类需检疫票）
-            if (ingredient.getCategory() == IngredientCategory.MEAT
+            // 票证缺失（肉类/禽肉类需检疫票）
+            if ((ingredient.getCategory() == IngredientCategory.MEAT
+                    || ingredient.getCategory() == IngredientCategory.POULTRY)
                     && (di.getQuarantineCertNo() == null || di.getQuarantineCertNo().isBlank())) {
                 anomalyService.create(supplier, order, batch, AnomalyType.MISSING_DOCUMENTS,
-                        ingredient.getCategory(),
+                        ingredient.getCategory(), ingredient,
                         "[" + ingredient.getName() + "] 缺少动物检疫合格证明", null);
             }
 

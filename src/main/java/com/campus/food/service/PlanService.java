@@ -47,7 +47,7 @@ public class PlanService {
             if (meal.getStatus() == MealStatus.CANCELLED) {
                 continue;
             }
-            for (MenuMealIngredient mmi : mealIngredientRepo.findByMealId(meal.getId())) {
+            for (MenuMealIngredient mmi : mealIngredientRepo.findByMealIdAndRetiredFalse(meal.getId())) {
                 Ingredient ing = mmi.getIngredient();
                 ingredients.put(ing.getId(), ing);
                 required.merge(ing.getId(), mmi.getQuantity(), BigDecimal::add);
@@ -168,6 +168,7 @@ public class PlanService {
     private String defaultQualityRequirement(IngredientCategory category) {
         return switch (category) {
             case MEAT -> "需提供动物检疫合格证明，肉质新鲜无异味，冷链运输";
+            case POULTRY -> "需提供动物检疫合格证明，禽肉新鲜无异味，冷链/冷冻运输";
             case VEGETABLE -> "新鲜无腐烂，腐烂比例不超过10%，农残抽检合格";
             case FRUIT -> "无霉变无碰伤，腐烂比例不超过10%";
             case DAIRY -> "在保质期内，冷链运输，包装完好";

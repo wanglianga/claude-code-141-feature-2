@@ -35,6 +35,13 @@ public class MenuMeal {
     @Column(nullable = false, length = 128)
     private String dishName;
 
+    /**
+     * 原菜名快照：菜单调整换菜后 dishName 更新为替代菜名，originalDishName 保留原菜单，
+     * 供家长询问时解释变更原因；未调整过的餐次与 dishName 相同。
+     */
+    @Column(length = 128)
+    private String originalDishName;
+
     /** 供餐份数 */
     @Column(nullable = false)
     private Integer servings = 0;

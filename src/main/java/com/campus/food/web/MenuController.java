@@ -2,7 +2,9 @@ package com.campus.food.web;
 
 import com.campus.food.domain.MenuMeal;
 import com.campus.food.domain.MenuMealIngredient;
+import com.campus.food.domain.MealGradeServing;
 import com.campus.food.domain.WeeklyMenu;
+import com.campus.food.domain.enums.GradeLevel;
 import com.campus.food.domain.enums.MealStatus;
 import com.campus.food.domain.enums.MealType;
 import com.campus.food.service.MenuService;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "周菜单")
 @RestController
@@ -86,5 +89,19 @@ public class MenuController {
     @PreAuthorize("hasRole('CANTEEN')")
     public MenuMeal updateMealStatus(@PathVariable Long mealId, @Valid @RequestBody MealStatusReq req) {
         return menuService.updateMealStatus(mealId, req.status());
+    }
+
+    @Operation(summary = "查询餐次分年级用餐人数")
+    @GetMapping("/meals/{mealId}/grade-servings")
+    public List<MealGradeServing> gradeServings(@PathVariable Long mealId) {
+        return menuService.gradeServings(mealId);
+    }
+
+    @Operation(summary = "维护餐次分年级用餐人数（整单覆盖，如 {\"GRADE_1\":80,...}）")
+    @PostMapping("/meals/{mealId}/grade-servings")
+    @PreAuthorize("hasRole('CANTEEN')")
+    public List<MealGradeServing> saveGradeServings(@PathVariable Long mealId,
+                                                    @RequestBody Map<GradeLevel, Integer> byGrade) {
+        return menuService.saveGradeServings(mealId, byGrade);
     }
 }

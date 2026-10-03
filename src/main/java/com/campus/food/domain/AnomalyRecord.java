@@ -48,6 +48,11 @@ public class AnomalyRecord {
     @Column(length = 32)
     private IngredientCategory category;
 
+    /** 涉及食材（少送/腐烂/票证等验收类异常记录到具体食材，便于菜单调整关联） */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ingredient_id")
+    private Ingredient ingredient;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private AnomalyStatus status = AnomalyStatus.OPEN;
